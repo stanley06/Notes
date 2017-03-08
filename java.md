@@ -1,9 +1,106 @@
-### Java Basics
+## Java Basics
 - java is always pass-by-value
 - except the primitive types, all objects value are pointer types (but unlike c++, no * needed to decode the pointer)
 - when passing object around, pointer value are actually passed around, thus reassignment will only change the pointer itself, not the contents the pointer pointed to
 - keyword 'final' only cast the constness of the pointer iself, rather than the contents the pointer pointing to
 
+
+## String Pool
+- String is immutable in java, which makes intern pool possible
+- String pool is a pool of constant strings, whose memory are in Heap
+- using "" to assign a string, will return a reference of the "string" from the heap
+- using 'new' operator to create a string, will force to create a string in the heap, but outside of the string pool
+- using String.intern() method, will put the underline string into string pool, and reference to the string in the string pool, and free extra memory from the heap
+
+## Immutable Class
+- immutable class is good for caching, and is inherently thread-safe
+- how to create immutable class? steps
+    - declare class as final, thus cannot be extended
+    - mark all data member as private, thus no direct access
+    - do not provide any setter methods, thus cannot change from outside
+    - make all mutable fields final, thus can only assign once
+    - initialize all fileds via constructor performing deep copy
+    - perform cloning of objects in getter method to return a copy of the object, instead of a reference to the actual object
+
+## Java References
+- Strong Reference
+    - used everywhere, and GC will not be able to collect the memory refered by strong reference
+- Soft Reference
+    - declared soft reference variable -> soft reference object -> the object itself
+    - GC will collect the memory refered by soft reference only when it thinks JVM is out of memory
+    - using get() to retrieve a strong reference to the object
+- Weak Reference
+    - declared weak reference variable -> weak reference object -> the object itself
+    - GC will collect the memory refered by weak reference whenever GC is running
+    - using get() to retrieve a strong reference to the object
+- Phantom Reference
+    - get() will always  return null
+    - every java object has a finalize() method, which is supposed to be called to do some cleanup work before GC actually reclaim the memory
+    - however, when GC will run is totaly unpredicable, thus we donot know when these cleanup work is performed
+    - phantom reference is the rescue
+    - phantom reference is declared together with a reference queue (rq), whenever GC has called the finalize() method, the phantom reference will be put into the reference queue
+    - by checking the contents of reference queue (non-blocking: poll(), blocking: remove()), one can know if finalize() method is called
+
+## Java Memory Model
+
+|   Edegn      | S0 | S1 |   Old Memory | Perm | 
+|<- Minor GC ->| <       |<- Major GC ->|
+|<- Young Gen (-Xmn)   ->|
+|<- JVM Heap (-Xms, -Xmx)             ->|
+
+### Composition
+- Young Generation
+- Old Generation
+- Permanent Generation
+
+#### Young Generation
+- consist of three regions: Eden Memory and two Survivor Memory
+- at any time, one of the two Survivor Memory is empty
+- all new objects are created in Edgen Memory, when it is full, Minor GC will be performed to move survived object in Eden Memory and one of the Survivor Memory to the other Survivor Memory
+- objects survived after a few rounds of Minor GC will be moved to Old Generation
+- Tunning
+    - -Xms (initial heap size)
+    - -Xmx (max heap size)
+    - -Xmn (size of Young Gen, rest will be for Old Gen)
+
+#### Old Generation
+- Contains long lived objects that survived many rounds of Minor GC
+- Major GC will be performed when Old Generation is full
+
+#### Permanent Generation
+- contains application metadata required by JVM to describe class and methods used in the application
+- is is not part of the Heap Memory
+- populated by JVM at run time based on classes used by the application
+- objects here are garbage collected in a full GC
+- Method Area
+    - in Perm Gen used to store class structure (runtime constants/static variables), code for methods
+- Memory Pool
+    - can belong to either Heap or Perm Gen
+    - pool of immutable objects created by JVM memory manager (e.g., string pool)
+- Tunning
+    - -XX:PermGen (initial size)
+    - XX:MaxPermGen (max size)
+
+### Gabarge Collection Type
+- Serial GC (-XX:+UseSerialGC)
+    - mark-sweep-compact procedure for Young/Old Gen GC
+    - single thread GC
+- Parallel GC (-XX:+UseParallelGC)
+    - N threads for Young Gen GC (-XX:ParallelGCThreads=N)
+    - single thred for Old Gen GC
+- Parallel Old GC (-XX:+UseParallelOldGC)
+    - same with Paralel GC, but use N threads for Old Gen GC
+- Concurrent Mark Sweep (CMS) Collector (-XX:+UseConcMarkSweepGC)
+    - minimize the pause, and do most of Old Gen GC work concurrent with the application thread
+    - Young Gen GC is same with Parallel GC
+    - -XX:ParallelCMSThreads=N to config N threads for Old Gen GC
+- G1 Garbage Collector (-XX:+UseG1GC)
+    - G1 (Garbage First) collector: long term replacement for CMS collector
+    - heap is partitioned into a set of equal-sized heap regionsk (No distinguishing between Young/Old Gen)
+    - G1 performs a concurrent global marking phase to determine the liveness of objects throughout the heap
+    - G1 knows which regions are mostly empty. It collects in these regions first, which usually yields a large amount of free space.
+    - G1 concentrates its collection and compaction activity on the areas of the heap that are likely to be full of reclaimable objects
+    - G1 uses a pause prediction model to meet a user-defined pause time target and selects the number of regions to collect based on the specified pause time target.
 
 ### Heap vs Stack
 - Heap is used by all parts of the application  vs  Stack is only used for thread execution
@@ -14,24 +111,6 @@
 - Heap memory full -> OutOfMemoryException vs Stack memory full -> StackOverflowException
 - Heap mmemory use -Xms/-Xmm to control start/maximal size vs Stack memory size use -Xss to control
 - Stack is faster than heap memory
-
-### String Pool
-- String is immutable in java, which makes intern pool possible
-- String pool is a pool of constant strings, whose memory are in Heap
-- using "" to assign a string, will return a reference of the "string" from the heap
-- using 'new' operator to create a string, will force to create a string in the heap, but outside of the string pool
-- using String.intern() method, will put the underline string into string pool, and reference to the string in the string pool, and free extra memory from the heap
- 
-
-### Immutable Class
-- immutable class is good for caching, and is inherently thread-safe
-- how to create immutable class? steps
-    - declare class as final, thus cannot be extended
-    - mark all data member as private, thus no direct access
-    - do not provide any setter methods, thus cannot change from outside
-    - make all mutable fields final, thus can only assign once
-    - initialize all fileds via constructor performing deep copy
-    - perform cloning of objects in getter method to return a copy of the object, instead of a reference to the actual object
 
 
 ## Design Pattern in Java
@@ -93,6 +172,12 @@
     - database connections
 
 #### Dependency Injection Pattern (a.k.a. Inversion of Control)
+- When?
+    - when declaring a member object inside a class, rather than using new to create a member object, it is better passed by reference, and the reference would be better a interface, thus can be extended without changing the client code
+- How?
+    - constructor injection
+    - setter injection
+    - interface injection
 
 ### Structural Design Pattern
 - Adapter Pattern
@@ -131,7 +216,3 @@
 - Interpreter Pattern
 - Iterator Pattern
 - Memento Pattern
-
-   -
-
-
