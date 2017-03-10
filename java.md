@@ -77,20 +77,25 @@
     - `-XX:PermGen` (initial size)
     - `-XX:MaxPermGen` (max size)
 
+### Garbage Collection Steps
+- Marking: identify objects that are not used anymore
+- Normal Deletion: remove the objects not in use and reclaim the space
+- Compacting: move all used objects together
+
 ### Gabarge Collection Type
-- Serial GC (-XX:+UseSerialGC)
-    - mark-sweep-compact procedure for Young/Old Gen GC
+- Serial GC (`-XX:+UseSerialGC`)
+    - `mark-sweep-compact` procedure for Young/Old Gen GC
     - single thread GC
-- Parallel GC (-XX:+UseParallelGC)
-    - N threads for Young Gen GC (-XX:ParallelGCThreads=N)
+- Parallel GC (`-XX:+UseParallelGC`)
+    - N threads for Young Gen GC (`-XX:ParallelGCThreads=N`)
     - single thred for Old Gen GC
-- Parallel Old GC (-XX:+UseParallelOldGC)
+- Parallel Old GC (`-XX:+UseParallelOldGC`)
     - same with Paralel GC, but use N threads for Old Gen GC
-- Concurrent Mark Sweep (CMS) Collector (-XX:+UseConcMarkSweepGC)
+- Concurrent Mark Sweep (CMS) Collector (`-XX:+UseConcMarkSweepGC`)
     - minimize the pause, and do most of Old Gen GC work concurrent with the application thread
     - Young Gen GC is same with Parallel GC
-    - -XX:ParallelCMSThreads=N to config N threads for Old Gen GC
-- G1 Garbage Collector (-XX:+UseG1GC)
+    - `-XX:ParallelCMSThreads=N` to config N threads for Old Gen GC
+- G1 Garbage Collector (`-XX:+UseG1GC`)
     - G1 (Garbage First) collector: long term replacement for CMS collector
     - heap is partitioned into a set of equal-sized heap regionsk (No distinguishing between Young/Old Gen)
     - G1 performs a concurrent global marking phase to determine the liveness of objects throughout the heap
@@ -187,18 +192,33 @@
 #### Flyweight Pattern
 - When?
     - when need to create tons of object and memory is limited, thus use this pattern to share the objects
-    - object same object's properties can be divided into intrinsic and extrinsice
-    - intrinsic properties are those that come with the object, and won't change
-    - extrinsic properties are those that come from the client
+    - object same object's properties can be divided into `intrinsic` and `extrinsice`
+    - `intrinsic` properties are those that come with the object, and won't change
+    - `extrinsic` properties are those that come from the client
 - How?
-    - flyweight interface: defines the interface that manipulate the shared object by the extrinsic properties
-    - concrete flyweight: stores the intrinsic properties and implements the flyweight interface
-    - flyweight factory: maintain and manage the flyweight object. if the flyweight object is not created, create it; if created, return reference to the flyweight object
-    - client: maintains reference to the shared object, and computes and manages the extrinsic properties of the shared object
+    - `flyweight interface`: defines the interface that manipulate the shared object by the `extrinsic` properties
+    - `concrete flyweight`: stores the `intrinsic` properties and implements the flyweight interface
+    - `flyweight factory`: maintain and manage the flyweight object. if the flyweight object is not created, create it; 
+    if created, return reference to the flyweight object
+    - `client`: maintains reference to the shared object, and computes and manages the `extrinsic` properties of the shared object
 - Examples?
     - Java string pool
     - In the game where tons of soilder need to be drawn, flyweight interface defints how to move soilders, and concreate flyweight object defines all intrinsic properties needed to draw the soilder; client controls how to move the soilder around
 
+#### Proxy Pattern
+- When?
+    - when we need to control the access of the object, we can consider Proxy Pattern
+    - examples:
+        - `protection proxy`: only give access to admins / make the object immutable by only providing getter and disable setter (fails fast)
+        - `virtual proxy`: delaying the creation and initialization of expensive objects
+        - `remote pvoxy`: provide local representation object which might call real object in remote address space
+- How?
+    - `subject interface`: the interface open to the client, and implemented by `read subject` and `proxy`
+    - 'real subject': the underlying object implenting the interface
+    - 'proxy': proxy of `real subject`, passed to the client
+        - maintains a reference to the `real subject`
+        - implement the interface, maybe calling the method of `real subject`
+        - control the access to `real subject`
 
 ### Behavioral Design Pattern
 - Template Method Pattern
