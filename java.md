@@ -214,8 +214,8 @@
         - `remote pvoxy`: provide local representation object which might call real object in remote address space
 - How?
     - `subject interface`: the interface open to the client, and implemented by `read subject` and `proxy`
-    - 'real subject': the underlying object implenting the interface
-    - 'proxy': proxy of `real subject`, passed to the client
+    - `real subject`: the underlying object implenting the interface
+    - `proxy`: proxy of `real subject`, passed to the client
         - maintains a reference to the `real subject`
         - implement the interface, maybe calling the method of `real subject`
         - control the access to `real subject`
